@@ -5,23 +5,43 @@
 
 # --------------------------------------------------------------------
 
-from PyQt4 import QtGui  # Import the PyQt4 module we'll need
+import logging
 import sys  # We need sys so that we can pass argv to QApplication
+import time
 
-import Horizontal_ui  # This file holds our MainWindow and all design related things
+import numpy as np
+import serial
+from PyQt4 import QtGui  # Import the PyQt4 module we'll need
+
 import Advancedparameters_ui
 import DACposition_ui
+import Horizontal_ui  # This file holds our MainWindow and all design related things
 import Micromode_ui
 
-import time
-import serial
+# create logger
+logger = logging.getLogger('HM App:')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler('HMApp_full.log')
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s\t%(name)s\t(%(levelname)s)\t:\t%(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+logger.info('--- Starting Application ---')
 
 
 ###----------DEF_FONCTIONS--------------------------------------
 
-
-
-def execution(commande):
+def execution(ser, commande):
+    logger.debug('Executing serial command: ' + commande)
     # Code to send a command to the controller
     # send the character to the device
     ser.write(bytes(commande + '\r\n', 'UTF-8'))
@@ -44,92 +64,96 @@ def execution(commande):
     return (rep)
 
 
-
-def initialisation(motorNb):
+def initialisation(ser, motorNb):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     init = ('INIT1', 'INIT2', 'INIT3', 'INIT4', 'INIT5', 'INIT6', 'INIT7', 'INIT8', 'INIT9')
-    execution(init[Nb.index(str(motorNb))])
+    execution(ser, init[Nb.index(str(motorNb))])
     return ()
 
 
-
-def deplacementmode(motorNb, mode):
+def deplacementmode(ser, motorNb, mode):
     # mode=1 if ABSOLUTE, mode=2 if RELATIVE
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     absol = ('ABSOL1', 'ABSOL2', 'ABSOL3', 'ABSOL4', 'ABSOL5', 'ABSOL6', 'ABSOL7', 'ABSOL8', 'ABSOL9')
     relat = ('RELAT1', 'RELAT2', 'RELAT3', 'RELAT4', 'RELAT5', 'RELAT6', 'RELAT7', 'RELAT8', 'RELAT9')
     if (mode == '1'):
-        execution(absol[Nb.index(str(motorNb))])
+        execution(ser, absol[Nb.index(str(motorNb))])
         return ()
     if (mode == '2'):
-        execution(relat[Nb.index(str(motorNb))])
+        execution(ser, relat[Nb.index(str(motorNb))])
         return ()
 
 
-def velocity(motorNb, velocity):
+def velocity(ser, motorNb, velocity):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     vel = ('IVEL1=', 'IVEL2=', 'IVEL3=', 'IVEL4=', 'IVEL5=', 'IVEL6=', 'IVEL7=', 'IVEL8=', 'IVEL9=')
-    execution(vel[Nb.index(str(motorNb))] + str(velocity))
+    execution(ser, vel[Nb.index(str(motorNb))] + str(velocity))
     return ()
 
 
-def position(motorNb, position):
+def position(ser, motorNb, position):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     pos = ('PSET1=', 'PSET2=', 'PSET3=', 'PSET4=', 'PSET5=', 'PSET6=', 'PSET7=', 'PSET8=', 'PSET9=')
-    execution(pos[Nb.index(str(motorNb))] + str(position))
+    execution(ser, pos[Nb.index(str(motorNb))] + str(position))
     return ()
 
 
-def move(motorNb):
+def move(ser, motorNb):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     mov = ('PGO1', 'PGO2', 'PGO3', 'PGO4', 'PGO5', 'PGO6', 'PGO7', 'PGO8', 'PGO9')
-    execution(mov[Nb.index(str(motorNb))])
+    execution(ser, mov[Nb.index(str(motorNb))])
     return ()
 
 
-def acceleration(motorNb, acceleration):
+def acceleration(ser, motorNb, acceleration):
+    logger.debug('function: acceleration')
+    logger.debug('\tset acceleration to:', acceleration)
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     acc = ('ACC1=', 'ACC2=', 'ACC3=', 'ACC4=', 'ACC5=', 'ACC6=', 'ACC7=', 'ACC8=', 'ACC9=')
-    execution(acc[Nb.index(str(motorNb))] + str(acceleration))
+    execution(ser, acc[Nb.index(str(motorNb))] + str(acceleration))
     return ()
 
 
-def deceleration(motorNb, deceleration):
+def deceleration(ser, motorNb, deceleration):
+    logger.debug('function: deceleration')
+    logger.debug('\tset deceleration to:', deceleration)
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     acc = ('DACC1=', 'DACC2=', 'DACC3=', 'DACC4=', 'DACC5=', 'DACC6=', 'DACC7=', 'DACC8=', 'DACC9=')
-    execution(acc[Nb.index(str(motorNb))] + str(deceleration))
+    execution(ser, acc[Nb.index(str(motorNb))] + str(deceleration))
     return ()
 
 
-def stop(motorNb):
+def stop(ser, motorNb):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     stp = ('STOP1', 'STOP2', 'STOP3', 'STOP4', 'STOP5', 'STOP6', 'STOP7', 'STOP8', 'STOP9')
-    execution(stp[Nb.index(str(motorNb))])
+    execution(ser, stp[Nb.index(str(motorNb))])
     return ()
 
 
-def positionvalue(motorNb):
+def positionvalue(ser, motorNb):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     pos = ('?CNT1', '?CNT2', '?CNT3', '?CNT4', '?CNT5', '?CNT6', '?CNT7', '?CNT8', '?CNT9')
-    position = execution(pos[Nb.index(motorNb)])
+    position = execution(ser, pos[Nb.index(motorNb)])
     return (position[0])
 
 
-def speedvalue(motorNb):
+def speedvalue(ser, motorNb):
     Nb = ('1', '2', '3', '4', '5', '6', '7', '8', '9')
     speed = ('?IVEL1', '?IVEL2', '?IVEL3', '?IVEL4', '?IVEL5', '?IVEL6', '?IVEL7', '?IVEL8', '?IVEL9')
-    speedval = execution(speed[Nb.index(motorNb)])
+    speedval = execution(ser, speed[Nb.index(motorNb)])
     return (speedval[0])
 
 
-def PcalcDiamondRaman(P_range, peak_position, diamond_peak = 1334):
+def PcalcDiamondRaman(P_range, peak_position, diamond_peak=1334):
     # these are the formulas that Paul Loubeyre uses to calculate his pressure
     if P_range < 200:
-
-        return int(100*np.around(547*((peak_position-diamond_peak)/diamond_peak)*(1+0.5*(3.75-1)*
-                        (peak_position-diamond_peak)/diamond_peak), decimals=3))/100
+        return int(100 * np.around(547 * ((peak_position - diamond_peak) / diamond_peak) * (1 + 0.5 * (3.75 - 1) *
+                                                                                            (
+                                                                                                peak_position - diamond_peak) / diamond_peak),
+                                   decimals=3)) / 100
     if P_range > 200:
-        return int(100*np.around(3141-4.157*peak_position+1.429e-3*peak_position**2,decimals=3))/100
+        return int(100 * np.around(3141 - 4.157 * peak_position + 1.429e-3 * peak_position ** 2, decimals=3)) / 100
+
 
 ## TODO: simple table and plotting in a separate tab?
 
@@ -153,44 +177,44 @@ class AdvancedparametersWindow(QtGui.QDialog, Advancedparameters_ui.Ui_Advanced_
     def positionval(self):
         motorNB = self.comboBox.currentIndex() + 1
         if (motorNB != 5):
-            self.position.setText(execution('?CNT' + str(motorNB)))
+            self.position.setText(execution(ser, '?CNT' + str(motorNB)))
         if (motorNB == 5):
-            self.position.setText(str(-1 * int(execution('?CNT' + str(motorNB)))))
+            self.position.setText(str(-1 * int(execution(ser, '?CNT' + str(motorNB)))))
 
     def mouvementplus(self):
         motorNB = self.comboBox.currentIndex() + 1
         if (motorNB != 5):
-            execution('PSET' + str(motorNB) + '=' + str(self.step.text()))
-            execution('PGO' + str(motorNB))
+            execution(ser, 'PSET' + str(motorNB) + '=' + str(self.step.text()))
+            execution(ser, 'PGO' + str(motorNB))
             time.sleep(0.1)
-            while (execution('?VACT' + str(motorNB)) != '0'):
+            while (execution(ser, '?VACT' + str(motorNB)) != '0'):
                 time.sleep(0.1)
-            self.position.setText(execution('?CNT' + str(motorNB)))
+            self.position.setText(execution(ser, '?CNT' + str(motorNB)))
         if (motorNB == 5):
-            execution('PSET' + str(motorNB) + '=-' + str(self.step.text()))
-            execution('PGO' + str(motorNB))
+            execution(ser, 'PSET' + str(motorNB) + '=-' + str(self.step.text()))
+            execution(ser, 'PGO' + str(motorNB))
             time.sleep(0.1)
-            while (execution('?VACT' + str(motorNB)) != '0'):
+            while (execution(ser, '?VACT' + str(motorNB)) != '0'):
                 time.sleep(0.1)
-            self.position.setText(str(-1 * int(execution('?CNT' + str(motorNB)))))
+            self.position.setText(str(-1 * int(execution(ser, '?CNT' + str(motorNB)))))
 
     def mouvementmoins(self):
         motorNB = self.comboBox.currentIndex() + 1
         if (motorNB != 5):
-            execution('PSET' + str(motorNB) + '=-' + str(self.step.text()))
-            execution('PGO' + str(motorNB))
+            execution(ser, 'PSET' + str(motorNB) + '=-' + str(self.step.text()))
+            execution(ser, 'PGO' + str(motorNB))
             time.sleep(0.1)
-            while (execution('?VACT' + str(motorNB)) != '0'):
+            while (execution(ser, '?VACT' + str(motorNB)) != '0'):
                 time.sleep(0.1)
-            self.position.setText(execution('?CNT' + str(motorNB)))
+            self.position.setText(execution(ser, '?CNT' + str(motorNB)))
         if (motorNB == 5):
             motorNB = self.comboBox.currentIndex() + 1
-            execution('PSET' + str(motorNB) + '=' + str(self.step.text()))
-            execution('PGO' + str(motorNB))
+            execution(ser, 'PSET' + str(motorNB) + '=' + str(self.step.text()))
+            execution(ser, 'PGO' + str(motorNB))
             time.sleep(0.1)
-            while (execution('?VACT' + str(motorNB)) != '0'):
+            while (execution(ser, '?VACT' + str(motorNB)) != '0'):
                 time.sleep(0.1)
-            self.position.setText(str(-1 * int(execution('?CNT' + str(motorNB)))))
+            self.position.setText(str(-1 * int(execution(ser, '?CNT' + str(motorNB)))))
 
     def saveparam(self):
         xyzacc = self.xyzAccNew.text()
@@ -227,15 +251,16 @@ class AdvancedparametersWindow(QtGui.QDialog, Advancedparameters_ui.Ui_Advanced_
             velocity(3, largespeed)
 
         for i in range(1, 7):
-            execution('SAVEAXPA' + str(i))
+            execution(ser, 'SAVEAXPA' + str(i))
 
     def seeparam(self):
-        self.xyzAccAct.setText(execution('?ACC4'))
-        self.xyzDecAct.setText(execution('?DACC4'))
-        self.xyzSpeedAct.setText(execution('?IVEL4'))
-        self.largeAccAct.setText(execution('?ACC1'))
-        self.largeDecAct.setText(execution('?DACC1'))
-        self.largeSpeedAct.setText(execution('?IVEL1'))
+        self.xyzAccAct.setText(execution(ser, '?ACC4'))
+        self.xyzDecAct.setText(execution(ser, '?DACC4'))
+        self.xyzSpeedAct.setText(execution(ser, '?IVEL4'))
+        self.largeAccAct.setText(execution(ser, '?ACC1'))
+        self.largeDecAct.setText(execution(ser, '?DACC1'))
+        self.largeSpeedAct.setText(execution(ser, '?IVEL1'))
+
 
 class DACpositionWindow(QtGui.QDialog, DACposition_ui.Ui_Form):
     def __init__(self, parent=None):
@@ -246,10 +271,11 @@ class DACpositionWindow(QtGui.QDialog, DACposition_ui.Ui_Form):
         self.btnSchwa.clicked.connect(self.schwamode)
 
     def cameramode(self):
-        execution('JACC3=2')
+        execution(ser, 'JACC3=2')
 
     def schwamode(self):
-        execution('JACC3=1')
+        execution(ser, 'JACC3=1')
+
 
 class MicromodeWindow(QtGui.QDialog, Micromode_ui.Ui_Microscopemode):
     def __init__(self, parent=None):
@@ -260,10 +286,11 @@ class MicromodeWindow(QtGui.QDialog, Micromode_ui.Ui_Microscopemode):
         self.btnRamanmode.clicked.connect(self.Ramanmode)
 
     def IRmode(self):
-        execution('JACC1=1')
+        execution(ser, 'JACC1=1')
 
     def Ramanmode(self):
-        execution('JACC1=2')
+        execution(ser, 'JACC1=2')
+
 
 class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
     def __init__(self):
@@ -320,13 +347,13 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
         self.btnGoP3.clicked.connect(self.Yvalue)
         self.btnGoP3.clicked.connect(self.Zvalue)
         self.btnsettings.clicked.connect(self.openparameters)
-        if (execution('?JACC3') == '1'):
+        if (execution(ser, '?JACC3') == '1'):
             self.radioButton_Schwa.setChecked(True)
-        if (execution('?JACC3') == '2'):
+        if (execution(ser, '?JACC3') == '2'):
             self.radioButton_Camera.setChecked(True)
-        if (execution('?JACC1') == '1'):
+        if (execution(ser, '?JACC1') == '1'):
             self.radioButton_IR.setChecked(True)
-        if (execution('?JACC1') == '2'):
+        if (execution(ser, '?JACC1') == '2'):
             self.radioButton_Raman.setChecked(True)
         self.btnSYZ.clicked.connect(self.SYZstatus)
         self.btnAll.clicked.connect(self.statusAll)
@@ -336,7 +363,6 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
         self.labelSYZ.setStyleSheet("QLabel {color : green}")
         self.btnSetzero.clicked.connect(self.SetZero)
 
-        # Feri
         self.btnPosText.clicked.connect(self.PosTextChange)
 
     def PosTextChange(self):
@@ -365,238 +391,238 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
         AdvancedparametersWindow().exec_()
 
     def GoP1(self):
-        execution('ABSOL4')  # Motor 4
+        execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position1X.text()
         position(4, xval)  # Motor 4
         move(4)  # Motor 4
-        execution('RELAT4')  # Motor 4
+        execution(ser, 'RELAT4')  # Motor 4
 
-        execution('ABSOL5')
+        execution(ser, 'ABSOL5')
         yval = self.Position1Y.text()
         position(5, str(-1 * int(yval)))
         move(5)
-        execution('RELAT5')
+        execution(ser, 'RELAT5')
 
-        execution('ABSOL6')
+        execution(ser, 'ABSOL6')
         zval = self.Position1Z.text()
         position(6, zval)
         move(6)
-        execution('RELAT6')
+        execution(ser, 'RELAT6')
 
     def GoP2(self):
-        execution('ABSOL4')  # Motor 4
+        execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position2X.text()
         position(4, xval)  # Motor 4
         move(4)  # Motor 4
-        execution('RELAT4')  # Motor 4
+        execution(ser, 'RELAT4')  # Motor 4
 
-        execution('ABSOL5')
+        execution(ser, 'ABSOL5')
         yval = self.Position2Y.text()
         position(5, str(-1 * int(yval)))
         move(5)
-        execution('RELAT5')
+        execution(ser, 'RELAT5')
 
-        execution('ABSOL6')
+        execution(ser, 'ABSOL6')
         zval = self.Position2Z.text()
         position(6, zval)
         move(6)
-        execution('RELAT6')
+        execution(ser, 'RELAT6')
 
     def GoP3(self):
-        execution('ABSOL4')  # Motor 4
+        execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position3X.text()
         position(4, xval)  # Motor 4
         move(4)  # Motor 4
-        execution('RELAT4')  # Motor 4
+        execution(ser, 'RELAT4')  # Motor 4
 
-        execution('ABSOL5')
+        execution(ser, 'ABSOL5')
         yval = self.Position3Y.text()
         position(5, str(-1 * int(yval)))
         move(5)
-        execution('RELAT5')
+        execution(ser, 'RELAT5')
 
-        execution('ABSOL6')
+        execution(ser, 'ABSOL6')
         zval = self.Position3Z.text()
         position(6, zval)
         move(6)
-        execution('RELAT6')
+        execution(ser, 'RELAT6')
 
     def SaveP1(self):
-        self.Position1X.setText(execution('?CNT4'))  # Motor 4
-        self.Position1Y.setText(str(-1 * int(execution('?CNT5'))))
-        self.Position1Z.setText(execution('?CNT6'))
+        self.Position1X.setText(execution(ser, '?CNT4'))  # Motor 4
+        self.Position1Y.setText(str(-1 * int(execution(ser, '?CNT5'))))
+        self.Position1Z.setText(execution(ser, '?CNT6'))
 
     def SaveP2(self):
-        self.Position2X.setText(execution('?CNT4'))  # Motor 4
-        self.Position2Y.setText(str(-1 * int(execution('?CNT5'))))
-        self.Position2Z.setText(execution('?CNT6'))
+        self.Position2X.setText(execution(ser, '?CNT4'))  # Motor 4
+        self.Position2Y.setText(str(-1 * int(execution(ser, '?CNT5'))))
+        self.Position2Z.setText(execution(ser, '?CNT6'))
 
     def SaveP3(self):
-        self.Position3X.setText(execution('?CNT4'))  # Motor 4
-        self.Position3Y.setText(str(-1 * int(execution('?CNT5'))))
-        self.Position3Z.setText(execution('?CNT6'))
+        self.Position3X.setText(execution(ser, '?CNT4'))  # Motor 4
+        self.Position3Y.setText(str(-1 * int(execution(ser, '?CNT5'))))
+        self.Position3Z.setText(execution(ser, '?CNT6'))
 
     def Xsetvalue(self):  # Motor 4
-        execution('ABSOL4')
+        execution(ser, 'ABSOL4')
         xval = self.SetpositionX.text()
         position(4, xval)
         move(4)
-        execution('RELAT4')
+        execution(ser, 'RELAT4')
 
     def Ysetvalue(self):
-        execution('ABSOL5')
+        execution(ser, 'ABSOL5')
         yval = self.SetpositionY.text()
         position(5, str(-1 * int(yval)))
         move(5)
-        execution('RELAT5')
+        execution(ser, 'RELAT5')
 
     def Zsetvalue(self):
-        execution('ABSOL6')
+        execution(ser, 'ABSOL6')
         zval = self.SetpositionZ.text()
         position(6, zval)
         move(6)
-        execution('RELAT6')
+        execution(ser, 'RELAT6')
 
     def Xvalue(self):
         time.sleep(0.1)
-        while (execution('?VACT4') != '0'):
+        while (execution(ser, '?VACT4') != '0'):
             time.sleep(0.1)
-        self.positionX.setText(execution('?CNT4'))
+        self.positionX.setText(execution(ser, '?CNT4'))
 
     def Yvalue(self):
         time.sleep(0.1)
-        while (execution('?VACT5') != '0'):
+        while (execution(ser, '?VACT5') != '0'):
             time.sleep(0.1)
-        self.positionY.setText(str(-1 * int(execution('?CNT5'))))
+        self.positionY.setText(str(-1 * int(execution(ser, '?CNT5'))))
 
     def Zvalue(self):
         time.sleep(0.1)
-        while (execution('?VACT6') != '0'):
+        while (execution(ser, '?VACT6') != '0'):
             time.sleep(0.1)
-        self.positionZ.setText(execution('?CNT6'))
+        self.positionZ.setText(ser, execution('?CNT6'))
 
     def micromode(self):
         if self.radioButton_IR.isChecked():
-            if (execution('?JACC1') == '1'):
-                execution('PSET1=0')
-                execution('PSET2=0')
-            if (execution('?JACC1') == '2'):
-                execution('PSET1=-1500000')
-                execution('PSET2=1500000')
-            execution('PGO1')
-            execution('PGO2')
-            execution('JACC1=1')
+            if (execution(ser, '?JACC1') == '1'):
+                execution(ser, 'PSET1=0')
+                execution(ser, 'PSET2=0')
+            if (execution(ser, '?JACC1') == '2'):
+                execution(ser, 'PSET1=-1500000')
+                execution(ser, 'PSET2=1500000')
+            execution(ser, 'PGO1')
+            execution(ser, 'PGO2')
+            execution(ser, 'JACC1=1')
         if self.radioButton_Raman.isChecked():
-            if (execution('?JACC1') == '1'):
-                execution('PSET1=1500000')
-                execution('PSET2=-1500000')
-            if (execution('?JACC1') == '2'):
-                execution('PSET1=0')
-                execution('PSET2=0')
-            execution('PGO1')
-            execution('PGO2')
-            execution('JACC1=2')
+            if (execution(ser, '?JACC1') == '1'):
+                execution(ser, 'PSET1=1500000')
+                execution(ser, 'PSET2=-1500000')
+            if (execution(ser, '?JACC1') == '2'):
+                execution(ser, 'PSET1=0')
+                execution(ser, 'PSET2=0')
+            execution(ser, 'PGO1')
+            execution(ser, 'PGO2')
+            execution(ser, 'JACC1=2')
 
     def DACposition(self):
         if self.radioButton_Camera.isChecked():
-            if (execution('?JACC3') == '1'):
-                execution('PSET3=-1500000')
-            if (execution('?JACC3') == '2'):
-                execution('PSET3=0')
-            execution('PGO3')
-            execution('JACC3=2')
+            if (execution(ser, '?JACC3') == '1'):
+                execution(ser, 'PSET3=-1500000')
+            if (execution(ser, '?JACC3') == '2'):
+                execution(ser, 'PSET3=0')
+            execution(ser, 'PGO3')
+            execution(ser, 'JACC3=2')
         if self.radioButton_Schwa.isChecked():
-            if (execution('?JACC3') == '1'):
-                execution('PSET3=0')
-            if (execution('?JACC3') == '2'):
-                execution('PSET3=1500000')
-            execution('PGO3')
-            execution('JACC3=1')
+            if (execution(ser, '?JACC3') == '1'):
+                execution(ser, 'PSET3=0')
+            if (execution(ser, '?JACC3') == '2'):
+                execution(ser, 'PSET3=1500000')
+            execution(ser, 'PGO3')
+            execution(ser, 'JACC3=1')
 
     def mouvementXh(self):
         position(4, int(self.stepX.text()))
-        execution('PGO4')  # Motor 4
+        execution(ser, 'PGO4')  # Motor 4
 
     def mouvementXb(self):
         position(4, -1 * int(self.stepX.text()))
-        execution('PGO4')  # Motor 4
+        execution(ser, 'PGO4')  # Motor 4
 
     def mouvementYh(self):
         position(5, -1 * int(self.stepY.text()))
-        execution('PGO5')
+        execution(ser, 'PGO5')
 
     def mouvementYb(self):
         position(5, 1 * int(self.stepY.text()))
-        execution('PGO5')
+        execution(ser, 'PGO5')
 
     def mouvementZh(self):
         position(6, 1 * int(self.stepZ.text()))
-        execution('PGO6')
+        execution(ser, 'PGO6')
 
     def mouvementZb(self):
         position(6, -1 * int(self.stepZ.text()))
-        execution('PGO6')
+        execution(ser, 'PGO6')
 
     def color(self):
         if not (self.radioButton_4.isChecked()):
             if not (self.radioButton_5.isChecked()):
                 if not (self.radioButton_6.isChecked()):
-                    execution('JACC4=2')
+                    execution(ser, 'JACC4=2')
                     self.labelSYZ.setText('Turn SYZ ON')
                     self.labelSYZ.setStyleSheet("QLabel {color : red}")
                     if not (self.radioButton_1.isChecked()):
                         if not (self.radioButton_2.isChecked()):
                             if not (self.radioButton_3.isChecked()):
-                                execution('JACC5=2')
+                                execution(ser, 'JACC5=2')
                                 self.btnAll.setStyleSheet("QPushButton {background : red}")
                                 self.btnAll.setText('Turn all ON')
         if (self.radioButton_4.isChecked()):
             if (self.radioButton_5.isChecked()):
                 if (self.radioButton_6.isChecked()):
-                    execution('JACC4=1')
+                    execution(ser, 'JACC4=1')
                     self.labelSYZ.setText('Turn SYZ OFF')
                     self.labelSYZ.setStyleSheet("QLabel {color : green}")
                     if (self.radioButton_1.isChecked()):
                         if (self.radioButton_2.isChecked()):
                             if (self.radioButton_3.isChecked()):
-                                execution('JACC5=1')
+                                execution(ser, 'JACC5=1')
                                 self.btnAll.setStyleSheet("QPushButton {background : green}")
                                 self.btnAll.setText('Turn all OFF')
 
     def SYZstatus(self):
-        if (execution('?JACC4') == '1'):  # Turn them off
-            execution('MOFF4')
-            execution('MOFF5')
-            execution('MOFF6')
+        if (execution(ser, '?JACC4') == '1'):  # Turn them off
+            execution(ser, 'MOFF4')
+            execution(ser, 'MOFF5')
+            execution(ser, 'MOFF6')
             self.radioButton_4.setChecked(False)
             self.radioButton_5.setChecked(False)
             self.radioButton_6.setChecked(False)
             status = 'off'
-        if (execution('?JACC4') == '2'):  # Turn them on
-            execution('MON4')
-            execution('MON5')
-            execution('MON6')
+        if (execution(ser, '?JACC4') == '2'):  # Turn them on
+            execution(ser, 'MON4')
+            execution(ser, 'MON5')
+            execution(ser, 'MON6')
             self.radioButton_4.setChecked(True)
             self.radioButton_5.setChecked(True)
             self.radioButton_6.setChecked(True)
             status = 'on'
         if (status == 'on'):
-            execution('JACC4=1')
+            execution(ser, 'JACC4=1')
             self.labelSYZ.setText('Turn SYZ OFF')
             self.labelSYZ.setStyleSheet("QLabel {color : green}")
         if (status == 'off'):
-            execution('JACC4=2')
+            execution(ser, 'JACC4=2')
             self.labelSYZ.setText('Turn SYZ ON')
             self.labelSYZ.setStyleSheet("QLabel {color : red}")
 
     def statusAll(self):
-        if (execution('?JACC5') == '1'):  # Turn them all off
-            execution('MOFF1')
-            execution('MOFF2')
-            execution('MOFF3')
-            execution('MOFF4')
-            execution('MOFF5')
-            execution('MOFF6')
+        if (execution(ser, '?JACC5') == '1'):  # Turn them all off
+            execution(ser, 'MOFF1')
+            execution(ser, 'MOFF2')
+            execution(ser, 'MOFF3')
+            execution(ser, 'MOFF4')
+            execution(ser, 'MOFF5')
+            execution(ser, 'MOFF6')
             self.radioButton_1.setChecked(False)
             self.radioButton_2.setChecked(False)
             self.radioButton_3.setChecked(False)
@@ -604,13 +630,13 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
             self.radioButton_5.setChecked(False)
             self.radioButton_6.setChecked(False)
             status = 'all_off'
-        if (execution('?JACC5') == '2'):  # Turn them all on
-            execution('MON1')
-            execution('MON2')
-            execution('MON3')
-            execution('MON4')
-            execution('MON5')
-            execution('MON6')
+        if (execution(ser, '?JACC5') == '2'):  # Turn them all on
+            execution(ser, 'MON1')
+            execution(ser, 'MON2')
+            execution(ser, 'MON3')
+            execution(ser, 'MON4')
+            execution(ser, 'MON5')
+            execution(ser, 'MON6')
             self.radioButton_1.setChecked(True)
             self.radioButton_2.setChecked(True)
             self.radioButton_3.setChecked(True)
@@ -619,91 +645,98 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
             self.radioButton_6.setChecked(True)
             status = 'all_on'
         if (status == 'all_on'):
-            execution('JACC5=1')
+            execution(ser, 'JACC5=1')
             self.btnAll.setStyleSheet("QPushButton {background : green}")
             self.btnAll.setText('Turn all OFF')
-            execution('JACC4=1')
+            execution(ser, 'JACC4=1')
             self.labelSYZ.setText('Turn SYZ OFF')
             self.labelSYZ.setStyleSheet("QLabel {color : green}")
         if (status == 'all_off'):
-            execution('JACC5=2')
+            execution(ser, 'JACC5=2')
             self.btnAll.setStyleSheet("QPushButton {background : red}")
             self.btnAll.setText('Turn all ON')
-            execution('JACC4=2')
+            execution(ser, 'JACC4=2')
             self.labelSYZ.setText('Turn SYZ ON')
             self.labelSYZ.setStyleSheet("QLabel {color : red}")
 
     def statemotor1(self):
         if self.radioButton_1.isChecked():
-            execution('MON1')
+            execution(ser, 'MON1')
         if not (self.radioButton_1.isChecked()):
-            execution('MOFF1')
+            execution(ser, 'MOFF1')
         self.color()
 
     def statemotor2(self):
         if self.radioButton_2.isChecked():
-            execution('MON2')
+            execution(ser, 'MON2')
         if not (self.radioButton_2.isChecked()):
-            execution('MOFF2')
+            execution(ser, 'MOFF2')
         self.color()
 
     def statemotor3(self):
         if self.radioButton_3.isChecked():
-            execution('MON3')
+            execution(ser, 'MON3')
         if not (self.radioButton_3.isChecked()):
-            execution('MOFF3')
+            execution(ser, 'MOFF3')
         self.color()
 
     def statemotor4(self):
         if self.radioButton_4.isChecked():
-            execution('MON4')
+            execution(ser, 'MON4')
         if not (self.radioButton_4.isChecked()):
-            execution('MOFF4')
+            execution(ser, 'MOFF4')
         self.color()
 
     def statemotor5(self):
         if self.radioButton_5.isChecked():
-            execution('MON5')
+            execution(ser, 'MON5')
         if not (self.radioButton_5.isChecked()):
-            execution('MOFF5')
+            execution(ser, 'MOFF5')
         self.color()
 
     def statemotor6(self):
         if self.radioButton_6.isChecked():
-            execution('MON6')
+            execution(ser, 'MON6')
         if not (self.radioButton_6.isChecked()):
-            execution('MOFF6')
+            execution(ser, 'MOFF6')
         self.color()
 
     def SetZero(self):
-        execution('CRES4')
-        execution('CRES5')
-        execution('CRES6')
+        execution(ser, 'CRES4')
+        execution(ser, 'CRES5')
+        execution(ser, 'CRES6')
         self.btnReadX.click()
 
     def stopall(self):
-        execution('JACC5=1')
+        execution(ser, 'JACC5=1')
         self.statusAll()
 
 
 # ------Open the windows-----
 def setup():
+    logger.info('STEP: setup')
     app = QtGui.QApplication(sys.argv)  # A new instance of QApplication
+    logger.info('\tDAC Position')
     form2 = DACpositionWindow()  # We set the form to be our ExampleApp (design)
     form2.show()
+    logger.info('\tOptical Arrangement')
     form3 = MicromodeWindow()  # We set the form to be our ExampleApp (design)
     form3.show()
     app.exec_()  # and execute the app
 
+
 def main():
+    logger.info('STEP: main')
+    logger.info('\tlaunching main window...')
     app = QtGui.QApplication(sys.argv)
     form = MainHorizontalWindow()  # We set the form to be our ExampleApp (design)
     form.show()
     app.exec_()  # and execute the app
 
 
-
 def discover_and_connect():
+    logger.info('STEP: discover_and_connect')
+    logger.info('\tfind serial port and connect')
     # Code to choose the serial port used
     ## this could be done much more elegantyl. what is the way of finding out the # of com ports in a machine?
     # consider this
@@ -717,51 +750,66 @@ def discover_and_connect():
     # choixport = 1
     # port = 0
     ser = serial.Serial  # why is this here?
-    for port in range(50):# (choixport == 1):
+    for port in range(50):  # (choixport == 1):
+        logger.debug('\tChecking COM' + str(port + 1))
         try:
             # Open the port
-            ser = serial.Serial(port='COM' + str(port+1),
+            ser = serial.Serial(port='COM' + str(port + 1),
                                 baudrate=9600,
                                 stopbits=serial.STOPBITS_ONE,
                                 bytesize=serial.EIGHTBITS)
 
             # try to get an answer from the PS90 controller. The answer would identify the system
             #  see ?ASTAT documentation
-            longueur = len(execution('?ASTAT'))
+            longueur = len(execution(ser, '?ASTAT'))
             if (longueur == 9 and str(ser.isOpen()) == 'True'):  # this could be done without the "str()"
                 choixport = 2
+                logger.debug('\t...attempting to connect to COM' + str(port + 1) + ': success.')
+                logger.info('\tConnected to COM' + str(port + 1) + '.')
+                break
             if not (longueur == 9):
+                logger.debug('\t...attempting to connect to COM' + str(port + 1) + ': failed')
                 choixport = 1
         except:
             if (port < 50):
                 port += 1
             else:
-                print(port, 'Make sure that the controller is connected to your computer')
+                logger.error('*** Connection error. Make sure USB cable is connected.')
                 # input()
                 # exit()
+    if (port >= 49):
+        logger.error(
+            '*** Connection error, did not find PS90 controller below port<50. Make sure USB cable is connected.')
+        ### would be nice to add a window here
+        logger.error('--- Shutting down ---')
+        exit()
 
-    print('controler connected on', 'COM' + str(port), ':', ser.isOpen())
-
-    return(ser)
+    return (ser)
     # Emptying the buffer
     # ser.reset_input_buffer()
     # ser.reset_output_buffer()
 
+
 def init_motors(ser):
+    logger.info('STEP: init_motors')
     relat = ('RELAT1', 'RELAT2', 'RELAT3', 'RELAT4', 'RELAT5', 'RELAT6')
     mon = ('MON1', 'MON2', 'MON3', 'MON4', 'MON5', 'MON6')
     for i in range(0, 6, 1):
-        execution(relat[i])
-        execution(mon[i])
-        initialisation(str(i + 1))
+        execution(ser, relat[i])
+        execution(ser, mon[i])
+        initialisation(ser, str(i + 1))
 
     # ---Variables---
-    execution('JACC4=1')
-    execution('JACC5=1')
+    execution(ser, 'JACC4=1')
+    execution(ser, 'JACC5=1')
+
 
 if __name__ == '__main__':  # if we're running file directly and not importing it
 
-    serial_port = discover_and_connect()
+    ser = discover_and_connect()
+    # init_motors(ser)
     init_motors(ser)
     setup()  # run the two configuration functions
     main()  # run the main function
+    ser.close()
+    logger.info('--- Clean Exit ---')
