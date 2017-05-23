@@ -654,7 +654,7 @@ class Ui_MainWindow(object):
         self.menuMenu.setTitle(_translate("MainWindow", "Menu", None))
         self.menu.setTitle(_translate("MainWindow", "-", None))
         self.actionClose.setText(_translate("MainWindow", "Close", None))
-        self.actionClose.setShortcut(_translate("MainWindow", "Esc", None))
+        self.actionClose.setShortcut(_translate("MainWindow", "Esc, Esc, Esc", None))
         self.actionSyzON.setText(_translate("MainWindow", "SyzON", None))
         self.actionSyzON.setShortcut(_translate("MainWindow", "Alt+D", None))
         self.actionSend.setText(_translate("MainWindow", "Send", None))

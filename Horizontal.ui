@@ -1266,7 +1266,7 @@
     <string>Close</string>
    </property>
    <property name="shortcut">
-    <string>Esc</string>
+    <string>Esc, Esc, Esc</string>
    </property>
   </action>
   <action name="actionSyzON">

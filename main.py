@@ -15,6 +15,7 @@ from PyQt4 import QtGui  # Import the PyQt4 module we'll need
 
 import Advancedparameters_ui
 import DACposition_ui
+import DACposition_simple
 import Horizontal_ui  # This file holds our MainWindow and all design related things
 import Micromode_ui
 
@@ -276,6 +277,20 @@ class DACpositionWindow(QtGui.QDialog, DACposition_ui.Ui_Form):
     def schwamode(self):
         execution(ser, 'JACC3=1')
 
+class InitialSetupWindow(QtGui.QDialog, DACposition_simple.Ui_Form):
+    def __init__(self, parent=None):
+        super(self.__class__, self).__init__(parent)
+        self.setupUi(self)
+
+        self.btnCamera.clicked.connect(self.cameramode)
+        self.btnSchwa.clicked.connect(self.schwamode)
+
+    def cameramode(self):
+        execution(ser, 'JACC3=2')
+
+    def schwamode(self):
+        execution(ser, 'JACC3=1')
+
 
 class MicromodeWindow(QtGui.QDialog, Micromode_ui.Ui_Microscopemode):
     def __init__(self, parent=None):
@@ -393,58 +408,58 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
     def GoP1(self):
         execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position1X.text()
-        position(4, xval)  # Motor 4
-        move(4)  # Motor 4
+        position(ser, 4, xval)  # Motor 4
+        move(ser, 4)  # Motor 4
         execution(ser, 'RELAT4')  # Motor 4
 
         execution(ser, 'ABSOL5')
         yval = self.Position1Y.text()
-        position(5, str(-1 * int(yval)))
-        move(5)
+        position(ser, 5, str(-1 * int(yval)))
+        move(ser, 5)
         execution(ser, 'RELAT5')
 
         execution(ser, 'ABSOL6')
         zval = self.Position1Z.text()
-        position(6, zval)
-        move(6)
+        position(ser, 6, zval)
+        move(ser, 6)
         execution(ser, 'RELAT6')
 
     def GoP2(self):
         execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position2X.text()
-        position(4, xval)  # Motor 4
-        move(4)  # Motor 4
+        position(ser, 4, xval)  # Motor 4
+        move(ser, 4)  # Motor 4
         execution(ser, 'RELAT4')  # Motor 4
 
         execution(ser, 'ABSOL5')
         yval = self.Position2Y.text()
-        position(5, str(-1 * int(yval)))
-        move(5)
+        position(ser, 5, str(-1 * int(yval)))
+        move(ser, 5)
         execution(ser, 'RELAT5')
 
         execution(ser, 'ABSOL6')
         zval = self.Position2Z.text()
-        position(6, zval)
-        move(6)
+        position(ser, 6, zval)
+        move(ser, 6)
         execution(ser, 'RELAT6')
 
     def GoP3(self):
         execution(ser, 'ABSOL4')  # Motor 4
         xval = self.Position3X.text()
-        position(4, xval)  # Motor 4
-        move(4)  # Motor 4
+        position(ser, 4, xval)  # Motor 4
+        move(ser, 4)  # Motor 4
         execution(ser, 'RELAT4')  # Motor 4
 
         execution(ser, 'ABSOL5')
         yval = self.Position3Y.text()
-        position(5, str(-1 * int(yval)))
-        move(5)
+        position(ser, 5, str(-1 * int(yval)))
+        move(ser, 5)
         execution(ser, 'RELAT5')
 
         execution(ser, 'ABSOL6')
         zval = self.Position3Z.text()
-        position(6, zval)
-        move(6)
+        position(ser, 6, zval)
+        move(ser, 6)
         execution(ser, 'RELAT6')
 
     def SaveP1(self):
@@ -465,22 +480,22 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
     def Xsetvalue(self):  # Motor 4
         execution(ser, 'ABSOL4')
         xval = self.SetpositionX.text()
-        position(4, xval)
-        move(4)
+        position(ser, 4, xval)
+        move(ser, 4)
         execution(ser, 'RELAT4')
 
     def Ysetvalue(self):
         execution(ser, 'ABSOL5')
         yval = self.SetpositionY.text()
-        position(5, str(-1 * int(yval)))
-        move(5)
+        position(ser, 5, str(-1 * int(yval)))
+        move(ser, 5)
         execution(ser, 'RELAT5')
 
     def Zsetvalue(self):
         execution(ser, 'ABSOL6')
         zval = self.SetpositionZ.text()
-        position(6, zval)
-        move(6)
+        position(ser, 6, zval)
+        move(ser, 6)
         execution(ser, 'RELAT6')
 
     def Xvalue(self):
@@ -499,7 +514,7 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
         time.sleep(0.1)
         while (execution(ser, '?VACT6') != '0'):
             time.sleep(0.1)
-        self.positionZ.setText(ser, execution('?CNT6'))
+        self.positionZ.setText(execution(ser, '?CNT6'))
 
     def micromode(self):
         if self.radioButton_IR.isChecked():
@@ -540,27 +555,27 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
             execution(ser, 'JACC3=1')
 
     def mouvementXh(self):
-        position(4, int(self.stepX.text()))
+        position(ser, 4, int(self.stepX.text()))
         execution(ser, 'PGO4')  # Motor 4
 
     def mouvementXb(self):
-        position(4, -1 * int(self.stepX.text()))
+        position(ser, 4, -1 * int(self.stepX.text()))
         execution(ser, 'PGO4')  # Motor 4
 
     def mouvementYh(self):
-        position(5, -1 * int(self.stepY.text()))
+        position(ser, 5, -1 * int(self.stepY.text()))
         execution(ser, 'PGO5')
 
     def mouvementYb(self):
-        position(5, 1 * int(self.stepY.text()))
+        position(ser, 5, 1 * int(self.stepY.text()))
         execution(ser, 'PGO5')
 
     def mouvementZh(self):
-        position(6, 1 * int(self.stepZ.text()))
+        position(ser, 6, 1 * int(self.stepZ.text()))
         execution(ser, 'PGO6')
 
     def mouvementZb(self):
-        position(6, -1 * int(self.stepZ.text()))
+        position(ser, 6, -1 * int(self.stepZ.text()))
         execution(ser, 'PGO6')
 
     def color(self):
@@ -713,6 +728,17 @@ class MainHorizontalWindow(QtGui.QMainWindow, Horizontal_ui.Ui_MainWindow):
 
 
 # ------Open the windows-----
+def setup_old():
+    logger.info('STEP: initial setup')
+    app = QtGui.QApplication(sys.argv)  # A new instance of QApplication
+    logger.info('\tDAC Position')
+    form2 = DACpositionWindow()  # We set the form to be our ExampleApp (design)
+    form2.show()
+    logger.info('\tOptical Arrangement')
+    form3 = MicromodeWindow()  # We set the form to be our ExampleApp (design)
+    form3.show()
+    app.exec_()  # and execute the app
+
 def setup():
     logger.info('STEP: setup')
     app = QtGui.QApplication(sys.argv)  # A new instance of QApplication
@@ -780,7 +806,7 @@ def discover_and_connect():
     if (port >= 49):
         logger.error(
             '*** Connection error, did not find PS90 controller below port<50. Make sure USB cable is connected.')
-        ### would be nice to add a window here
+        ### would be nice to add a window here or at least a pause
         logger.error('--- Shutting down ---')
         exit()
 
